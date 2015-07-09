@@ -155,8 +155,7 @@ int hex_to_256(char *color)
  *
  * @param argc the number of command-line arguments the program was invoked
  *     with.
- * @param argv pointer to an array of character strings that contain the
- *     arguments.
+ * @param argv an array of character pointers that contain the arguments.
  *
  * @returns integer denoting the status of the program at termination.
  *     0 means normal termination
