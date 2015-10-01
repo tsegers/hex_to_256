@@ -2,7 +2,9 @@
 #include <stdlib.h>
 #include <ctype.h>
 
-/* 
+#define t_co256
+
+/*
  * Table Refernce:
  * https://upload.wikimedia.org/wikipedia/en/1/15/Xterm_256color_chart.svg
  */
@@ -52,12 +54,14 @@ void nearest_color(char *color, int *result, int *error)
 
     /*
      * Loops three times (once for each element \in {R, G, B}) and finds the
-     * index of the nearest color in the colors array.
+     * index of the nearest color in the colors array for each of them.
      */
     for (int c = 0; c < 3; c++) {
+        int lowest_pair_error = 0xFF;
+
+        /* Convery hex to dec */
         int current_pair_val = 16 * (char_to_hex_val(color[2 * c])) +
                                1 * (char_to_hex_val(color[2 * c + 1]));
-        int lowest_pair_error = 0xFF;
 
         /* Iterate over the colors array in search of the nearest value */
         for (int i = 0; i < 6; i++) {
@@ -73,8 +77,10 @@ void nearest_color(char *color, int *result, int *error)
         color_error += lowest_pair_error;
     }
 
-    /* Pass back the results and return */
+    /* Convery the three indexes to their 256 colour equivalent */
     *result = (16 + 36 * index_array[0] + 6 * index_array[1] + index_array[2]);
+
+    /* Save the error for later use */
     *error = color_error;
 }
 
@@ -91,16 +97,16 @@ void nearest_grayscale(char *color, int *result, int *error)
     int lowest_gray_error = 0xFFFFFF;
     int best_index;
 
-    /* 
+    /*
      * Iterate over the grayscales array in search of the value with the lowest
      * error.
      */
     for (int g = 0; g < 24; g++) {
         int current_gray_error = 0;
 
-        /* 
+        /*
          * Determine the error by adding the individual errors for each element
-         * \in {B, G, B} 
+         * \in {B, G, B}
          */
         for (int c = 0; c < 3; c++) {
             int current_pair_val = 16 * (char_to_hex_val(color[2 * c])) +
@@ -115,9 +121,11 @@ void nearest_grayscale(char *color, int *result, int *error)
         }
     }
 
-    /* Pass back the results and return */
-    *error = lowest_gray_error;
+    /* Convert the index to its 256 colour equivalent */
     *result = 232 + best_index;
+
+    /* Save error for later use */
+    *error = lowest_gray_error;
 }
 
 /**
@@ -171,10 +179,18 @@ int main(int argc, const char *argv[])
      * output
      */
     for (int i = 1; i < argc; i++) {
-        color_in = argv[i];
+        color_in = argv[i]; 
         color_256 = hex_to_256((char *) color_in);
 
-        printf("Hex: #%s \n256: %7.0i\n\n", color_in, color_256);
+#ifdef t_co256
+        printf("Hex: #%s ", color_in);
+        printf("\e[7m\e[38;5;%im    \e[0m\n", color_256);
+        printf("256: %7.0i ", color_256);
+        printf("\e[7m\e[38;5;%im    \e[0m\n\n", color_256);
+#else
+        printf("Hex: #%s \n", color_in);
+        printf("256: %7.0i\n\n", color_256);
+#endif
     }
 
     /* Exit */

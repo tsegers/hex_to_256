@@ -28,10 +28,6 @@ default: compile
 # Compile
 compile: $(TARGET)
 
-# Doc
-doc: clean
-	doxygen Doxyfile
-
 install: compile
 	cp ./$(TARGET) /usr/bin
 
