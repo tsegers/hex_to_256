@@ -1,65 +1,92 @@
 # ----------------------------------------------------
-# Default makefile
+# Makefile
 # ----------------------------------------------------
-TARGET  = hex_to_256
+ 
+# General
+CC        = gcc
+SHELL     = /bin/sh
+MKDIR_P  ?= mkdir -p
 
-# Init
-SHELL = /bin/sh
-CC = gcc
+# Installing
+INST_DIR  = /usr/bin
+
+# Project
+TARGET   ?= hex_to_256
+
+BLD_DIR   = ./build
+SRC_DIR   = ./src
+
+INC_DIRS := 
+LIB_DIRS  = 
+
+SOURCES  := $(shell find $(SRC_DIR) -name '*.c')
+HEADERS  := $(shell find $(SRC_DIR) -name '*.h')
+OBJECTS  := $(SOURCES:$(SRC_DIR)/%.c=$(BLD_DIR)/%.o)
+
+MANUAL    = readme.md
 
 # Flags
-FLAGS   		= -std=c99 $(INCLUDE_DIRS)
-CFLAGS 			= -W -g
-LDFLAGS 		=
-DEBUGFLAGS   	= -O0 -D _DEBUG
-DISTFLAGS    	= -O2 -D NDEBUG -combine -fwhole-program
-TESTFLAGS 		= 
-LIBS 			=
-INCLUDE_DIRS 	= 
+IFLAGS  := $(addprefix -I,$(INC_DIRS)) 
+LFLAGS  := $(addprefix -L,$(LIB_DIRS))
 
-# Files
-SOURCES = $(wildcard *.c)
-HEADERS = $(wildcard *.h)
-OBJECTS = $(SOURCES:.c=.o)
+CFLAGS   := -std=c99 -W -g -c $(IFLAGS) 
+LDFLAGS   = $(LFLAGS) 
 
-# Default
+# ----------------------------------------------------
+
+quiet_cmd_cc    = "  CC      $@"
+quiet_cmd_ld    = "  LD      $@"
+quiet_cmd_clean = "  CLEAN   $(BLD_DIR)"
+quiet_cmd_exe   = "  EXE     $(BLD_DIR)/$(TARGET)"
+quiet_cmd_inst  = "  INSTALL $(INST_DIR)"
+quiet_cmd_uinst = "  REMOVE  $(INST_DIR)/$(TARGET)"
+quiet_cmd_ar    = "  AR      $(@)"
+
+# ----------------------------------------------------
+ 
 default: compile
 
-# Compile
-compile: $(TARGET)
+clean:
+	@echo $(quiet_cmd_clean)
+	@rm -r $(BLD_DIR)
 
 install: compile
-	cp ./$(TARGET) /usr/bin
+	@echo $(quiet_cmd_inst)
+	@echo "$(INST_DIR)/$(TARGET)" > ./install.manifest
+	@cp $(BLD_DIR)/$(TARGET) $(INST_DIR)
 
 uninstall:
-	rm /usr/bin/$(TARGET)
+	@echo $(quiet_cmd_uinst)
+	@rm $(INST_DIR)/$(TARGET)
 
-# Clean
-clean:
-	rm -f $(TARGET)
-	rm -f $(OBJECTS)
+lib: $(BLD_DIR)/lib$(TARGET).a
+	@$(MKDIR_P) $(BLD_DIR)/include/
+	@cp $(HEADERS) $(BLD_DIR)/include/
 
 options:
-	@echo "$(TARGET) build options:"
-	@echo "FLAGS        = ${FLAGS}"
-	@echo "CFLAGS       = ${CFLAGS}"
-	@echo "LDFLAGS      = ${LDFLAGS}"
-	@echo "DEBUGFLAGS   = ${DEBUGFLAGS}"
-	@echo "RELEASEFLAGS = ${RELEASEFLAGS}"
-	@echo "INCLUDE_DIRS = ${INCLUDE_DIRS}"
-	@echo "EXTRA_DIST   = ${EXTRA_DIST}"
-	@echo
-	@echo "DEBUG: ${DEBUG}"
-	@echo "DIST: ${DIST}"
-	@echo "TEST: ${TEST}"
+	@echo "Build options for [$(TARGET)]:"
+	@echo "Source Directory : $(SRC_DIR)"
+	@echo "Build Directory  : $(BLD_DIR)"
+	@echo "CFLAGS           : $(CFLAGS)"
+	@echo "LDFLAGS          : $(LDFLAGS)"
+	@echo ""
 
-# Compile AUX
-$(TARGET): $(OBJECTS) 
-	$(CC) $(FLAGS) $(CFLAGS) $(LDFLAGS) -o $(TARGET) $(OBJECTS)
+compile: $(BLD_DIR)/$(TARGET)
 
-%.o: %.c $(HEADERS)
-	$(CC) $(FLAGS) $(CFLAGS) $(LDFLAGS) -c -o $@ $<
+run: compile
+	@echo $(quiet_cmd_exe)
+	@$(BLD_DIR)/$(TARGET)
 
+$(BLD_DIR)/%.o: $(SRC_DIR)/%.c
+	@echo $(quiet_cmd_cc)
+	@$(MKDIR_P) $(dir $@)
+	@$(CC) $(CFLAGS) -c $< -o $@
 
+$(BLD_DIR)/$(TARGET): $(OBJECTS) 
+	@echo $(quiet_cmd_ld)
+	@$(CC) $(OBJECTS) $(LDFLAGS) -o $@
 
+$(BLD_DIR)/lib$(TARGET).a: $(OBJECTS) 
+	@echo $(quiet_cmd_ar)
+	@ar rs $(BLD_DIR)/lib$(TARGET).a $(OBJECTS)
 

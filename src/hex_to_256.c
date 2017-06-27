@@ -213,11 +213,11 @@ int main(int argc, const char *argv[])
 #ifdef t_co256
                 printf("Hex: #%s ", incolor);
                 printf("\e[7m\e[38;5;%im    \e[0m\n", color_256);
-                /* printf("256: %7.0i ", color_256);                   */
-                /* printf("\e[7m\e[38;5;%im    \e[0m\n\n", color_256); */
+                printf("256: %7.0i ", color_256);                  
+                printf("\e[7m\e[38;5;%im    \e[0m\n\n", color_256);
 #else
                 printf("Hex: #%s \n", incolor);
-                /* printf("256: %7.0i\n\n", color_256); */
+                printf("256: %7.0i\n\n", color_256);
 #endif
             } else {
                 printf("Color %s not recognized\n\n", incolor);
