@@ -193,29 +193,38 @@ int hex_to_256(char *color)
 int main(int argc, const char *argv[])
 {
     /* Temp variables */
-    const char *color_in;
-    int color_256;
+    char c;
+    int i = 0;
+    char incolor[6];
 
-    /*
-     * Process the arguments, pass them trough the converter and print the
-     * output
-     */
-    for (int i = 1; i < argc; i++) {
-        color_in = argv[i]; 
-        color_256 = hex_to_256((char *) color_in);
-
-        if (color_256 != -1) {
-#ifdef t_co256
-            printf("Hex: #%s ", color_in);
-            printf("\e[7m\e[38;5;%im    \e[0m\n", color_256);
-            printf("256: %7.0i ", color_256);
-            printf("\e[7m\e[38;5;%im    \e[0m\n\n", color_256);
-#else
-            printf("Hex: #%s \n", color_in);
-            printf("256: %7.0i\n\n", color_256);
-#endif
+    while ((c = getchar()) != EOF) {
+        /* Start reading characters into buffer */
+        if (('0' <= c && c <= '9') || ('A' <= c && c <= 'F')) {
+            incolor[i] = c;
+            i++;
         } else {
-            printf("Color %s not recognized\n\n", color_in);
+            i = 0;
+        }
+
+        /* If full, convert and print */
+        if (i == 6) {
+            int color_256 = hex_to_256((char *) incolor);
+            if (color_256 != -1) {
+#ifdef t_co256
+                printf("Hex: #%s ", incolor);
+                printf("\e[7m\e[38;5;%im    \e[0m\n", color_256);
+                /* printf("256: %7.0i ", color_256);                   */
+                /* printf("\e[7m\e[38;5;%im    \e[0m\n\n", color_256); */
+#else
+                printf("Hex: #%s \n", incolor);
+                /* printf("256: %7.0i\n\n", color_256); */
+#endif
+            } else {
+                printf("Color %s not recognized\n\n", incolor);
+            }
+
+            /* Start over */
+            i = 0;
         }
     }
 
